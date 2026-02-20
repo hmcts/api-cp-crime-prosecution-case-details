@@ -44,13 +44,14 @@ paths:
                   value:
                     caseStatus: "ACTIVE"
                     reportingRestrictions: false
-
         '400':
           description: Bad input parameter
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
+        '404':
+          description: Case Not Found
 
 components:
   schemas:
