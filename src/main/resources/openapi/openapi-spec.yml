@@ -1,11 +1,11 @@
-openapi: 3.0.0
+openapi: 3.1.0
 servers:
-  - description: APIHub API Auto Mocking Scheduling and Listing court-schedule
-    url: https://virtserver.swaggerhub.com/HMCTS-DTS/api-cp-crime-schedulingandlisting-courtschedule/0.0.0
+  - description: APIHub API Auto Mocking Crime Prosecution Case Details
+    url: https://virtserver.swaggerhub.com/HMCTS-DTS/api-cp-crime-prosecution-case-details/0.0.0
 
 info:
-  title: Common Platform API Scheduling and Listing Court Schedule
-  description: Scheduling and Listing API providing the court schedule
+  title: AMP API for Crime Prosecution Case Details
+  description: AMP API providing the Crime Prosecution Case Details
   version: 0.0.0
   contact:
     email: no-reply@hmcts.com
@@ -13,65 +13,55 @@ info:
     name: MIT
     url: 'https://opensource.org/licenses/MIT'
 
+tags:
+  - name: Case Details
+    description: Case Details API
 paths:
-  /:
+  /cases/{case_urn}:
     get:
-      description: Root endpoint
-      operationId: getRoot
       tags:
-        - root
-
-      responses:
-        '200':
-          description: OK
-          content:
-            text/plain:
-              schema:
-                type: string
-                example: Hello
-
-  /example/{example_id}:
-    get:
-      description: Get example for example_id
-      operationId: getExampleByExampleId
-      tags:
-        - examples
+        - Case Details
+      description: Retrieve details of a crime prosecution case details by case URN.
+      operationId: getCaseDetailsByCaseUrn
       parameters:
         - in: path
-          name: example_id
+          name: case_urn
           required: true
-          description: Unique id for the example - long
+          description: Unique reference number for the case
           schema:
-            type: integer
-            format: int64
+            type: string
+
       responses:
         '200':
-          description:  Examples found
+          description:  Case found
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/ExampleResponse"
+                $ref: "#/components/schemas/CaseDetailResponse"
+              examples:
+                Example:
+                  summary: Case Detail
+                  value:
+                    caseStatus: "ACTIVE"
+                    reportingRestrictions: false
         '400':
           description: Bad input parameter
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
+        '404':
+          description: Case Not Found
 
 components:
   schemas:
-    ExampleResponse:
-      description: Details of examples associated with the example id
+    CaseDetailResponse:
       type: object
       properties:
-        exampleId:
-          description: Id of the example - long
-          type: integer
-          format: int64
-        exampleText:
-          description: Information associated with the example id
+        caseStatus:
           type: string
-          example: "Some text"
+        reportingRestrictions:
+          type: boolean
 
     ErrorResponse:
       type: object

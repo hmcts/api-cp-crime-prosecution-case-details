@@ -1,0 +1,17 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "http://justice.gov.uk/prosecutionCaseAmp.schema.json",
+  "type": "object",
+  "properties": {
+    "caseStatus": {
+      "type": "string"
+    },
+    "reportingRestrictions": {
+      "type": "boolean"
+    }
+  },
+  "required": [
+    "caseStatus",
+    "reportingRestrictions"
+  ]
+}
