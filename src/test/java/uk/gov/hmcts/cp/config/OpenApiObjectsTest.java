@@ -2,10 +2,9 @@ package uk.gov.hmcts.cp.config;
 
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.Test;
-import uk.gov.hmcts.cp.openapi.api.ExamplesApi;
-import uk.gov.hmcts.cp.openapi.api.RootApi;
+import uk.gov.hmcts.cp.openapi.api.CaseDetailsApi;
+import uk.gov.hmcts.cp.openapi.model.CaseDetailResponse;
 import uk.gov.hmcts.cp.openapi.model.ErrorResponse;
-import uk.gov.hmcts.cp.openapi.model.ExampleResponse;
 import java.lang.reflect.Field;
 import java.time.Instant;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -19,17 +18,12 @@ class OpenApiObjectsTest {
 
     @Test
     void generated_court_schedule_should_have_expected_fields() {
-        assertThat(ExampleResponse.class).hasDeclaredFields("exampleId", "exampleText");
-    }
-
-    @Test
-    void generated_root_api_should_have_expected_methods() {
-        assertThat(RootApi.class).hasDeclaredMethods("getRoot");
+        assertThat(CaseDetailResponse.class).hasDeclaredFields("caseStatus", "reportingRestrictions");
     }
 
     @Test
     void generated_example_api_should_have_expected_methods() {
-        assertThat(ExamplesApi.class).hasDeclaredMethods("getExampleByExampleId");
+        assertThat(CaseDetailsApi.class).hasDeclaredMethods("getCaseDetailsByCaseUrn");
     }
     @Test
     void generated_error_response_timestamp_should_be_instant() throws Exception {
