@@ -17,12 +17,12 @@ class OpenApiObjectsTest {
     }
 
     @Test
-    void generated_court_schedule_should_have_expected_fields() {
+    void generated_case_details_should_have_expected_fields() {
         assertThat(CaseDetailResponse.class).hasDeclaredFields("caseStatus", "reportingRestrictions");
     }
 
     @Test
-    void generated_example_api_should_have_expected_methods() {
+    void generated_caseDetails_api_should_have_expected_methods() {
         assertThat(CaseDetailsApi.class).hasDeclaredMethods("getCaseDetailsByCaseUrn");
     }
     @Test
