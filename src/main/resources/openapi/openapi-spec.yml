@@ -1,17 +1,25 @@
 openapi: 3.1.0
 servers:
-  - description: APIHub API Auto Mocking Crime Prosecution Case Details
-    url: https://virtserver.swaggerhub.com/HMCTS-DTS/api-cp-crime-prosecution-case-details/0.0.0
+  - description: SwaggerHub virtserver mock (used by Try it out on app.swaggerhub.com)
+    url: https://virtserver.swaggerhub.com/HMCTS-DTS/api-cp-crime-prosecution-case-details/{version}
+    variables:
+      version:
+        default: 0.0.0
+        description: API version; match this to the spec version when using Try it out
 
 info:
-  title: AMP API for Crime Prosecution Case Details
-  description: AMP API providing the Crime Prosecution Case Details
+  title: Crime Prosecution Case Details
+  description: |
+    API providing the Crime Prosecution Case Details.
   version: 0.0.0
   contact:
     email: no-reply@hmcts.com
   license:
     name: MIT
     url: 'https://opensource.org/licenses/MIT'
+
+security:
+  - bearerAuth: [ ]
 
 tags:
   - name: Case Details
@@ -54,6 +62,12 @@ paths:
           description: Case Not Found
 
 components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
   schemas:
     CaseDetailResponse:
       type: object
