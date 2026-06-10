@@ -10,7 +10,12 @@ servers:
 info:
   title: Crime Prosecution Case Details
   description: |
-    API providing the Crime Prosecution Case Details.
+    Returns a summary of a criminal prosecution case for a given case reference number.
+
+    Provides the current status of the case, any reporting restrictions in place,
+    defendant details, and associated hearing information. Used by prosecutors,
+    defence solicitors, and court staff who need an up-to-date view of a case as
+    it progresses through the courts.
   version: 0.0.0
   contact:
     email: no-reply@hmcts.com
