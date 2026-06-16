@@ -1,17 +1,30 @@
 openapi: 3.1.0
 servers:
-  - description: APIHub API Auto Mocking Crime Prosecution Case Details
-    url: https://virtserver.swaggerhub.com/HMCTS-DTS/api-cp-crime-prosecution-case-details/0.0.0
+  - description: Crime Prosecution Case Details API
+    url: https://api-cp-crime-prosecution-case-details.net/{version}
+    variables:
+      version:
+        default: 0.0.0
+        description: API version; matches the spec info.version
 
 info:
-  title: AMP API for Crime Prosecution Case Details
-  description: AMP API providing the Crime Prosecution Case Details
+  title: Crime Prosecution Case Details
+  description: |
+    Returns a summary of a criminal prosecution case for a given case reference number.
+
+    Provides the current status of the case, any reporting restrictions in place,
+    defendant details, and associated hearing information. Used by prosecutors,
+    defence solicitors, and court staff who need an up-to-date view of a case as
+    it progresses through the courts.
   version: 0.0.0
   contact:
     email: no-reply@hmcts.com
   license:
     name: MIT
     url: 'https://opensource.org/licenses/MIT'
+
+security:
+  - bearerAuth: [ ]
 
 tags:
   - name: Case Details
@@ -54,6 +67,12 @@ paths:
           description: Case Not Found
 
 components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
   schemas:
     CaseDetailResponse:
       type: object
