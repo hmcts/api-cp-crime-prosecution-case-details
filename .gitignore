@@ -1,8 +1,5 @@
 .gradle
 /build/
-gradle/wrapper
-gradlew
-gradlew.bat
 *.class
 bin
 
@@ -30,3 +27,5 @@ package-lock.json
 */.DS_Store
 
 /*report.html
+
+.claude/CLAUDE.md
