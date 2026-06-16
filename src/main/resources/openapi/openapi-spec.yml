@@ -1,16 +1,21 @@
 openapi: 3.1.0
 servers:
-  - description: SwaggerHub virtserver mock (used by Try it out on app.swaggerhub.com)
-    url: https://virtserver.swaggerhub.com/HMCTS-DTS/api-cp-crime-prosecution-case-details/{version}
+  - description: Crime Prosecution Case Details API
+    url: https://api-cp-crime-prosecution-case-details.net/{version}
     variables:
       version:
         default: 0.0.0
-        description: API version; match this to the spec version when using Try it out
+        description: API version; matches the spec info.version
 
 info:
   title: Crime Prosecution Case Details
   description: |
-    API providing the Crime Prosecution Case Details.
+    Returns a summary of a criminal prosecution case for a given case reference number.
+
+    Provides the current status of the case, any reporting restrictions in place,
+    defendant details, and associated hearing information. Used by prosecutors,
+    defence solicitors, and court staff who need an up-to-date view of a case as
+    it progresses through the courts.
   version: 0.0.0
   contact:
     email: no-reply@hmcts.com
