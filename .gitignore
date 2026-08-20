@@ -29,3 +29,9 @@ package-lock.json
 /*report.html
 
 .claude/CLAUDE.md
+
+# Terraform
+.terraform/
+*.tfstate
+*.tfstate.*
+crash.log
