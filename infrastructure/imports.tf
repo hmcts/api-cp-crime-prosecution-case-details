@@ -5,6 +5,7 @@
 locals {
   administrators_product_group_ids = {
     "sps-api-mgmt-sbox" = "/subscriptions/bd2864ed-4f3e-45ed-9c6a-8d179674bab1/resourceGroups/rg-sps-platform-sbox/providers/Microsoft.ApiManagement/service/sps-api-mgmt-sbox/products/cp-crime-prosecution-case-details/groups/administrators"
+    "sps-api-mgmt-demo" = "/subscriptions/058bf954-ac1f-462b-bca4-42a30314bd74/resourceGroups/rg-sps-platform-demo/providers/Microsoft.ApiManagement/service/sps-api-mgmt-demo/products/cp-crime-prosecution-case-details/groups/administrators"
   }
 }
 
