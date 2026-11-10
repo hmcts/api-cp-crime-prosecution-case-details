@@ -1,0 +1,50 @@
+name: Infrastructure release
+on:
+  workflow_run:
+    workflows: [ "CI Build and Publish (RELEASE)" ]
+    types: [ completed ]
+  workflow_dispatch:
+
+concurrency:
+  group: terraform-release
+  cancel-in-progress: false
+
+permissions:
+  id-token: write
+  contents: read
+  pull-requests: write
+
+jobs:
+  precheck:
+    name: Terraform Precheck
+    if: ${{ github.event_name == 'workflow_dispatch' || (github.event.workflow_run.event == 'release' && github.event.workflow_run.conclusion == 'success') }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Terraform format check
+        uses: hmcts/cnp-githubactions-library/terraform-fmt@main
+        with:
+          working-directory: infrastructure
+          recursive: true
+
+  terraform-prod:
+    name: Terraform prod
+    needs: [ precheck ]
+    uses: hmcts/cnp-githubactions-library/.github/workflows/terraform-deploy-openId.yaml@main
+    with:
+      environment: prod
+      subscription: ${{ vars.AZURE_SUBSCRIPTION_PROD }}
+      aks-subscription: ${{ vars.AZURE_SUBSCRIPTION_PROD }}
+      storage-account: ${{ vars.TFSTATE_STORAGE_ACCOUNT_PROD }}
+      azure-client-id: ${{ vars.AZURE_CLIENT_ID_PROD }}
+      azure-subscription-id: ${{ vars.AZURE_SUBSCRIPTION_ID_PROD }}
+      state-store-resource-group: rg-sps-platform-prod
+      state-store-account-name: spsapimapiprodstate
+      state-store-container-name: terraform-state
+      state-store-use-entra-id-auth: true
+      working-directory: infrastructure
+      plan-only: false
+      product: cp-crime-prosecution-case-details
+      post-plan-to-pr: false
