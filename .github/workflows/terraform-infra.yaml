@@ -81,7 +81,7 @@ jobs:
 
       - name: Fail on breaking changes
         if: steps.base.outputs.skip == 'false'
-        uses: oasdiff/oasdiff-action/breaking@9e56cf8b3aff7edb326d5767d3d23f96127e20c3 # v0.1.21
+        uses: oasdiff/oasdiff-action/breaking@8a211b41745fcecdfa4a86531ffbf08934fb14f6 # v0.1.23
         with:
           base: base/src/main/resources/openapi/openapi-spec.yml
           revision: src/main/resources/openapi/openapi-spec.yml
