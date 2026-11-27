@@ -91,3 +91,36 @@ variable "apis" {
     api_type              = optional(string, "http")
   }))
 }
+
+variable "cp_token_exchange" {
+  description = <<-EOT
+    When set, APIM swaps the validated external token for a CP-issued token before calling the backend.
+    APIM signs in to the CP tenant as the consumer's CP-access app, using its user-assigned managed identity
+    as a federated credential (no secret), and caches the CP token per CP-access app.
+  EOT
+  type = object({
+    # CP tenant that issues the token.
+    tenant_id = string
+    # Client ID of the CP API's publisher app; the token is requested for "<audience>/.default".
+    audience = string
+    # APIM's user-assigned identity that the CP-access apps' federated credentials trust.
+    identity_name           = string
+    identity_resource_group = string
+    # External consumer client ID (the token's azp) => that consumer's CP-access app client ID.
+    client_map = optional(map(string), {})
+    # true: a consumer missing from client_map gets 403. false: its request is forwarded unchanged,
+    # with the external token, so existing consumers keep working while the swap is introduced.
+    reject_unmapped = optional(bool, true)
+    # The CP token is cached until this many seconds before it expires.
+    cache_buffer_seconds = optional(number, 300)
+  })
+  default = null
+
+  validation {
+    condition = var.cp_token_exchange == null || alltrue(concat(
+      [for id in [try(var.cp_token_exchange.tenant_id, ""), try(var.cp_token_exchange.audience, "")] : can(regex("^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$", id))],
+      [for k, v in try(var.cp_token_exchange.client_map, {}) : can(regex("^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$", k)) && can(regex("^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$", v))]
+    ))
+    error_message = "cp_token_exchange tenant_id, audience and every client_map key and value must be lower-case GUIDs."
+  }
+}

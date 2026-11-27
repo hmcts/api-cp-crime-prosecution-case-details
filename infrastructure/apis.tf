@@ -50,6 +50,13 @@ module "apis" {
   content_format = "openapi"
 }
 
+# APIM's user-assigned identity for CP token exchange (created in shared-platform-services-infra).
+data "azurerm_user_assigned_identity" "cp_token_exchange" {
+  count               = var.cp_token_exchange != null ? 1 : 0
+  name                = var.cp_token_exchange.identity_name
+  resource_group_name = var.cp_token_exchange.identity_resource_group
+}
+
 resource "azurerm_api_management_api_policy" "api_policy" {
   for_each = var.apis
 
@@ -60,6 +67,15 @@ resource "azurerm_api_management_api_policy" "api_policy" {
   xml_content = templatefile("${path.module}/policies/api-policy.xml", {
     tenant_id = var.entra_tenant_id
     client_id = var.entra_client_id
+
+    # CP token exchange (see variables.tf). Off when cp_token_exchange is null.
+    cp_token_exchange       = var.cp_token_exchange != null
+    cp_tenant_id            = try(var.cp_token_exchange.tenant_id, "")
+    cp_audience             = try(var.cp_token_exchange.audience, "")
+    cp_identity_client_id   = try(data.azurerm_user_assigned_identity.cp_token_exchange[0].client_id, "")
+    cp_client_map           = try(var.cp_token_exchange.client_map, {})
+    cp_reject_unmapped      = try(var.cp_token_exchange.reject_unmapped, true)
+    cp_cache_buffer_seconds = try(var.cp_token_exchange.cache_buffer_seconds, 300)
   })
 
   depends_on = [module.apis]

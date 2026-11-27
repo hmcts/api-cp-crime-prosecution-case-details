@@ -3,7 +3,7 @@
         <base />
         <choose>
             <when condition="@(context.Request.Headers.ContainsKey(&quot;Authorization&quot;))">
-                <validate-jwt header-name="Authorization" failed-validation-httpcode="401" failed-validation-error-message="Your JWT token failed CNP validation! ">
+                <validate-jwt header-name="Authorization" failed-validation-httpcode="401" failed-validation-error-message="Your JWT token failed CNP validation! " output-token-variable-name="extJwt">
                     <openid-config url="https://login.microsoftonline.com/${tenant_id}/v2.0/.well-known/openid-configuration" />
                     <audiences>
                         <audience>${client_id}</audience>
@@ -31,6 +31,88 @@
                 </return-response>
             </otherwise>
         </choose>
+%{ if cp_token_exchange ~}
+        <!-- CP token exchange: swap the validated external token for a CP token for this consumer's CP-access app. -->
+        <set-variable name="extAzp" value="@(((Jwt)context.Variables[&quot;extJwt&quot;]).Claims.GetValueOrDefault(&quot;azp&quot;, &quot;&quot;))" />
+        <set-variable name="cpAppId" value="" />
+%{ if length(cp_client_map) > 0 ~}
+        <choose>
+%{ for ext_client_id, cp_app_id in cp_client_map ~}
+            <when condition="@((string)context.Variables[&quot;extAzp&quot;] == &quot;${ext_client_id}&quot;)">
+                <set-variable name="cpAppId" value="${cp_app_id}" />
+            </when>
+%{ endfor ~}
+        </choose>
+%{ endif ~}
+%{ if cp_reject_unmapped ~}
+        <choose>
+            <when condition="@(string.IsNullOrEmpty((string)context.Variables[&quot;cpAppId&quot;]))">
+                <return-response>
+                    <set-status code="403" reason="Forbidden" />
+                    <set-header name="Content-Type" exists-action="override">
+                        <value>application/json</value>
+                    </set-header>
+                    <set-body>{"error":"This client is not enabled for this API."}</set-body>
+                </return-response>
+            </when>
+        </choose>
+%{ endif ~}
+        <choose>
+            <when condition="@(!string.IsNullOrEmpty((string)context.Variables[&quot;cpAppId&quot;]))">
+                <cache-lookup-value key="@(&quot;cp-token-&quot; + (string)context.Variables[&quot;cpAppId&quot;] + &quot;-${cp_audience}&quot;)" variable-name="cpToken" />
+                <choose>
+                    <when condition="@(!context.Variables.ContainsKey(&quot;cpToken&quot;))">
+                        <!-- APIM's user-assigned identity token is the client assertion: no secret is stored. -->
+                        <authentication-managed-identity resource="api://AzureADTokenExchange" client-id="${cp_identity_client_id}" output-token-variable-name="miAssertion" ignore-error="false" />
+                        <send-request mode="new" response-variable-name="cpTokenResponse" timeout="10" ignore-error="true">
+                            <set-url>https://login.microsoftonline.com/${cp_tenant_id}/oauth2/v2.0/token</set-url>
+                            <set-method>POST</set-method>
+                            <set-header name="Content-Type" exists-action="override">
+                                <value>application/x-www-form-urlencoded</value>
+                            </set-header>
+                            <set-body>@("grant_type=client_credentials"
+                                + "&amp;client_id=" + (string)context.Variables["cpAppId"]
+                                + "&amp;scope=" + Uri.EscapeDataString("${cp_audience}/.default")
+                                + "&amp;client_assertion_type=" + Uri.EscapeDataString("urn:ietf:params:oauth:client-assertion-type:jwt-bearer")
+                                + "&amp;client_assertion=" + (string)context.Variables["miAssertion"])</set-body>
+                        </send-request>
+                        <choose>
+                            <!-- No answer from CP Entra, or a server error. -->
+                            <when condition="@(context.Variables[&quot;cpTokenResponse&quot;] == null || ((IResponse)context.Variables[&quot;cpTokenResponse&quot;]).StatusCode &gt;= 500)">
+                                <return-response>
+                                    <set-status code="502" reason="Bad Gateway" />
+                                    <set-header name="Content-Type" exists-action="override">
+                                        <value>application/json</value>
+                                    </set-header>
+                                    <set-body>{"error":"Could not get a token from CP."}</set-body>
+                                </return-response>
+                            </when>
+                            <!-- CP refused, for example AADSTS501051 when the CP-access app has no role. -->
+                            <when condition="@(((IResponse)context.Variables[&quot;cpTokenResponse&quot;]).StatusCode != 200)">
+                                <return-response>
+                                    <set-status code="403" reason="Forbidden" />
+                                    <set-header name="Content-Type" exists-action="override">
+                                        <value>application/json</value>
+                                    </set-header>
+                                    <set-body>{"error":"CP has not granted this client access to this API."}</set-body>
+                                </return-response>
+                            </when>
+                        </choose>
+                        <set-variable name="cpTokenBody" value="@(((IResponse)context.Variables[&quot;cpTokenResponse&quot;]).Body.As&lt;JObject&gt;())" />
+                        <set-variable name="cpToken" value="@((string)((JObject)context.Variables[&quot;cpTokenBody&quot;])[&quot;access_token&quot;])" />
+                        <cache-store-value key="@(&quot;cp-token-&quot; + (string)context.Variables[&quot;cpAppId&quot;] + &quot;-${cp_audience}&quot;)" value="@((string)context.Variables[&quot;cpToken&quot;])" duration="@(Math.Max(60, (int)((JObject)context.Variables[&quot;cpTokenBody&quot;])[&quot;expires_in&quot;] - ${cp_cache_buffer_seconds}))" />
+                    </when>
+                </choose>
+                <set-header name="Authorization" exists-action="override">
+                    <value>@("Bearer " + (string)context.Variables["cpToken"])</value>
+                </set-header>
+            </when>
+        </choose>
+        <!-- For logs only: the backend identifies the caller from the CP token's azp. -->
+        <set-header name="X-Client-Id" exists-action="override">
+            <value>@((string)context.Variables["extAzp"])</value>
+        </set-header>
+%{ endif ~}
         <rate-limit-by-key calls="30" renewal-period="60" counter-key="@((context.Subscription?.Key ?? context.Request.IpAddress) + &quot;:pcd&quot;)" />
         <quota-by-key calls="500" renewal-period="86400" counter-key="@((context.Subscription?.Key ?? context.Request.IpAddress) + &quot;:pcd&quot;)" />
     </inbound>
